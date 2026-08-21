@@ -577,10 +577,16 @@ let config = loadConfig();
 /* =========================================================================
    2. STATE (persisted)
    ========================================================================= */
-const STORE_KEY = "kck-lunch-wheel-v3";
+const STORE_KEY = "kck-lunch-wheel-v4";
 function loadState(){
-  // Always start fresh each time the wheel opens: Chaos OFF, and Aqui reset to
-  // full strength so the percentage is always correct (no stale saved count).
+  // Aqui count persists per-browser between visits. Chaos always starts OFF.
+  // The saved count is clamped to the current full count so a stale/oversized
+  // value can never make the wheel show the wrong Aqui %.
+  try{
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if(s && typeof s.aquiRemaining==="number")
+      return { aquiRemaining: Math.min(Math.max(0, s.aquiRemaining), aquiFullCount()), chaos:false };
+  }catch(e){}
   return { aquiRemaining: aquiFullCount(), chaos:false };
 }
 function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
