@@ -579,7 +579,8 @@ let config = loadConfig();
    ========================================================================= */
 const STORE_KEY = "kck-lunch-wheel-v3";
 function loadState(){
-  try{ const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(s && typeof s.aquiRemaining==="number") return { aquiRemaining:s.aquiRemaining, chaos:!!s.chaos }; }catch(e){}
+  // Always start fresh each time the wheel opens: Chaos OFF, and Aqui reset to
+  // full strength so the percentage is always correct (no stale saved count).
   return { aquiRemaining: aquiFullCount(), chaos:false };
 }
 function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
@@ -911,6 +912,24 @@ const fx = $("fx"), fxc = fx.getContext("2d");
 let particles=[], fxRunning=false;
 function sizeFx(){ fx.width=innerWidth; fx.height=innerHeight; }
 sizeFx(); addEventListener("resize", sizeFx);
+
+// Pre-render each emoji to a small canvas ONCE, then drawImage it every frame.
+// Chrome's per-frame fillText(emoji) is very slow (Safari has a fast native
+// path); cached sprites + drawImage make it smooth on both.
+const _emojiSprites = {};
+function emojiSprite(ch){
+  let s = _emojiSprites[ch];
+  if(s) return s;
+  const S = 64;
+  s = document.createElement("canvas"); s.width = S; s.height = S;
+  const c = s.getContext("2d");
+  c.font = Math.floor(S*0.8) + "px serif"; c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText(ch, S/2, S/2);
+  _emojiSprites[ch] = s;
+  return s;
+}
+
+const MAX_PARTICLES = 1100;               // perf cap so a storm can't pile up forever
 function burst(n, opts={}){
   const colors = opts.colors || ["#ffd21f","#ff2e6a","#4ecdc4","#a06cd5","#7bd389","#ff9f45","#5aa9ff"];
   const cx = opts.x!=null?opts.x:innerWidth/2, cy = opts.y!=null?opts.y:innerHeight*0.35;
@@ -923,21 +942,22 @@ function burst(n, opts={}){
       shape:Math.random()<0.25?"circ":"rect", emoji:opts.emoji&&Math.random()<0.28?pick(opts.emoji):null
     });
   }
+  if(particles.length > MAX_PARTICLES) particles.splice(0, particles.length - MAX_PARTICLES);
   if(!fxRunning){ fxRunning=true; requestAnimationFrame(stepFx); }
 }
 function stepFx(){
   fxc.clearRect(0,0,fx.width,fx.height);
   particles = particles.filter(p=>p.life>0 && p.y<fx.height+40);
-  particles.forEach(p=>{
+  for(const p of particles){
     p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=p.decay;
     fxc.save(); fxc.globalAlpha=Math.max(0,p.life); fxc.translate(p.x,p.y); fxc.rotate(p.rot);
-    if(p.emoji){ fxc.font=`${p.size*2.6}px serif`; fxc.textAlign="center"; fxc.fillText(p.emoji,0,0); }
+    if(p.emoji){ const d=p.size*2.6; fxc.drawImage(emojiSprite(p.emoji), -d/2, -d/2, d, d); }
     else{ fxc.fillStyle=p.color;
       if(p.shape==="circ"){ fxc.beginPath(); fxc.arc(0,0,p.size/2,0,7); fxc.fill(); }
       else fxc.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
     }
     fxc.restore();
-  });
+  }
   if(particles.length){ requestAnimationFrame(stepFx); } else { fxRunning=false; fxc.clearRect(0,0,fx.width,fx.height); }
 }
 
