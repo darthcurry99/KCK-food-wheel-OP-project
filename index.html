@@ -1332,6 +1332,7 @@ $("ddSpinBtn").addEventListener("click", ()=>{
   ddWheel.spin(()=>{ sPeg(); }, (winner)=>{
     stopSpinSound();
     $("ddSpinBtn").disabled=false;
+    $("ddWheelModal").classList.remove("show"); // close the DD wheel so the celebration shows on top
     shakeScreen(); playRandomYay();
     fireworks({emoji:[winner.emoji,"🛵","🎉","🥡","✨","🎊"]});
     showResult(winner,{lead:"DOORDASHING FROM"});
