@@ -308,6 +308,32 @@ button.btn:active{transform:translateY(1px)}
 .admin-card .go{background:linear-gradient(180deg,#ffe680,#ff9e00);color:#3a1160;font-weight:700;border:none;border-radius:999px;padding:11px 22px;font-size:15px;cursor:pointer;font-family:'Fredoka',sans-serif;box-shadow:0 4px 0 #b8860b}
 .admin-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 #b8860b}
 
+/* =========================================================================
+   SPLASH SCREEN
+   ========================================================================= */
+#splash{
+  position:fixed;inset:0;z-index:100;cursor:pointer;padding:24px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:
+    radial-gradient(1200px 800px at 20% -10%, #3a1160 0%, transparent 55%),
+    radial-gradient(1000px 700px at 100% 0%, #10305e 0%, transparent 55%),
+    linear-gradient(160deg,var(--bg1),var(--bg2));
+  transition:opacity .55s ease;
+}
+#splash.hide{opacity:0;pointer-events:none}
+.splash-emoji{font-size:clamp(72px,20vw,150px);line-height:1;animation:splashSpin 6s linear infinite;filter:drop-shadow(0 12px 30px rgba(0,0,0,.5))}
+@keyframes splashSpin{to{transform:rotate(360deg)}}
+.splash-title{
+  font-family:'Luckiest Guy',cursive;font-weight:400;line-height:1.05;margin:14px 12px 8px;
+  font-size:clamp(34px,8.5vw,74px);color:var(--accent);
+  text-shadow:0 3px 0 #b8860b,0 6px 18px rgba(0,0,0,.5);
+}
+.splash-sub{
+  font-size:clamp(15px,3.6vw,22px);letter-spacing:1px;opacity:.85;margin:0;
+  animation:splashPulse 1.4s ease-in-out infinite;
+}
+@keyframes splashPulse{0%,100%{opacity:.45}50%{opacity:1}}
+
 /* confetti + fx canvas layers */
 #fx{position:fixed;inset:0;pointer-events:none;z-index:90}
 
@@ -424,6 +450,13 @@ button.btn:active{transform:translateY(1px)}
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ===================== SPLASH (click to enter → starts fanfare) ===================== -->
+  <div id="splash">
+    <div class="splash-emoji">🎡</div>
+    <h1 class="splash-title">KCK Lunch Wheel<br>of Destiny</h1>
+    <p class="splash-sub">click anywhere to enter</p>
   </div>
 
   <div id="chaosFlash"></div>
@@ -818,18 +851,25 @@ function playFrom(list, vol){
 }
 function playRandomYay(){ playFrom(YAY_FILES, 0.85); }
 
-let introStarted = false, introAudio = null;
+let introDone = false, introAudio = null;
 function playLaunchFanfare(){
-  if(introStarted || muted) return;
+  if(introDone || muted) return;
   const files = shuffle(INTRO_FILES); let i=0;
-  const tryNext=()=>{ if(i>=files.length) return;
+  const tryNext=()=>{
+    if(introDone || i>=files.length) return;
     const a=new Audio(SOUND_DIR+files[i++]); a.volume=0.7;
-    a.addEventListener("playing", ()=>{ introStarted=true; introAudio=a; }, {once:true});
-    a.play().catch(()=>tryNext());
+    a.play().then(()=>{ introDone=true; introAudio=a; }).catch(()=>tryNext()); // skip formats that won't play
   };
   tryNext();
 }
-function stopFanfare(){ introStarted=true; if(introAudio){ try{ introAudio.pause(); }catch(e){} introAudio=null; } }
+// A spin only FADES OUT the fanfare if it's actually playing — it never blocks
+// the fanfare from starting, so it still fires when you land on the site.
+function stopFanfare(){
+  if(!introAudio) return;
+  const a=introAudio; introAudio=null;
+  let v=a.volume||0.7;
+  const f=setInterval(()=>{ v-=0.15; if(v<=0){ clearInterval(f); try{ a.pause(); }catch(e){} } else { try{ a.volume=v; }catch(e){} } }, 40);
+}
 
 // SPIN.mp3 plays while the wheel is spinning. It's ~37s and the front is slow,
 // so we preload it and start partway in (with a little randomness), then fade
@@ -1336,10 +1376,22 @@ rebuildMain();
 updateChaosBtn();
 initSpinTrack();  // preload SPIN.mp3 so we can seek into it instantly
 
-// Launch fanfare: try immediately; browsers usually block autoplay, so also
-// fire on the first user interaction (whichever happens first).
-playLaunchFanfare();
-["pointerdown","keydown","click"].forEach(ev=> window.addEventListener(ev, ()=>playLaunchFanfare(), {once:true}));
+// Splash screen: the click (or key) that dismisses it is a real user gesture,
+// so it unlocks audio and fires the launch fanfare right as you enter.
+(function setupSplash(){
+  const splash = $("splash");
+  if(!splash) return;
+  let entered = false;
+  const enter = ()=>{
+    if(entered) return; entered = true;
+    ac();                 // unlock audio on this real gesture
+    playLaunchFanfare();  // 🎺 start the fanfare
+    splash.classList.add("hide");
+    setTimeout(()=>{ splash.style.display = "none"; }, 600);
+  };
+  splash.addEventListener("click", enter);
+  window.addEventListener("keydown", enter, {once:true});
+})();
 
 // Redraw wheels on font load so labels use Fredoka (canvas text needs the font ready)
 if(document.fonts && document.fonts.ready){
