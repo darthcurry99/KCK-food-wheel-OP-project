@@ -1388,8 +1388,8 @@ initSpinTrack();  // preload SPIN.mp3 so we can seek into it instantly
   if(!splash) return;
   // crazy confetti + fireworks nonsense while the splash is up
   const party = ["🎉","✨","🎊","⭐","💥","🥳","🎈","🌈","🍕","🥗","🌮","🍣","🧋","🛵"];
-  fireworks({emoji:party, rounds:10});
-  const fw = setInterval(()=>{ fireworks({emoji:party, rounds:6}); fireworks({emoji:party, rounds:6}); }, 300);
+  fireworks({emoji:party, rounds:5});
+  const fw = setInterval(()=> fireworks({emoji:party, rounds:3}), 550);
   let entered = false;
   const enter = ()=>{
     if(entered) return; entered = true;
