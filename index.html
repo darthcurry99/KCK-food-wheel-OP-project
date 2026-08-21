@@ -747,13 +747,14 @@ class Wheel {
       const s = this.sliceAt(pa);
       const idx = this.slices.indexOf(s);
       if(idx!==lastIdx){ lastIdx=idx; onTick && onTick(); }
-      // Drive the flapper straight off the wheel position: deflection peaks
-      // between pegs and returns at each peg. Flap rate == peg-pass rate, so it
-      // buzzes when fast and eases to slow clicks as the wheel winds down.
+      // Drive the flapper off the wheel position: it rests STRAIGHT in the
+      // middle of a slice and kicks over as each peg passes (peaks at the
+      // boundaries). So when the wheel stops mid-slice, the flapper points
+      // straight at the winner instead of leaning toward a neighbour.
       const w = Math.max(0.0001, s.a1 - s.a0);
       const entry = dir>0 ? s.a1 : s.a0;
       let frac = Math.abs(pa - entry) / w; frac = frac<0?0:frac>1?1:frac;
-      this.setFlap((dir * MAXFLAP * Math.sin(frac*Math.PI)).toFixed(2));
+      this.setFlap((dir * MAXFLAP * Math.pow(Math.abs(Math.cos(frac*Math.PI)), 1.5)).toFixed(2));
       if(t<1){ requestAnimationFrame(frame); }
       else{
         this.rotation = ((final % 360)+360)%360;
