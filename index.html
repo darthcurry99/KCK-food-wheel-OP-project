@@ -1,0 +1,1349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KCK Lunch Wheel of Destiny</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
+<style>
+/* =========================================================================
+   THEME / BASE
+   ========================================================================= */
+:root{
+  --bg1:#1a0b2e;
+  --bg2:#0d1b3e;
+  --ink:#fff5e6;
+  --accent:#ffd21f;
+  --hot:#ff2e6a;
+  --doordash:#eb1700;
+  --boba:#ff8fd0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Fredoka',system-ui,-apple-system,sans-serif;
+  color:var(--ink);
+  min-height:100vh;
+  background:
+    radial-gradient(1200px 800px at 20% -10%, #3a1160 0%, transparent 55%),
+    radial-gradient(1000px 700px at 100% 0%, #10305e 0%, transparent 55%),
+    linear-gradient(160deg,var(--bg1),var(--bg2));
+  overflow-x:hidden;
+  text-align:center;
+}
+h1{
+  font-family:'Luckiest Guy',cursive;
+  font-weight:400;
+  font-size:clamp(28px,6vw,58px);
+  margin:18px 12px 2px;
+  line-height:1.05;
+  letter-spacing:1px;
+  color:var(--accent);
+  text-shadow:0 3px 0 #b8860b, 0 6px 18px rgba(0,0,0,.5);
+}
+.subtitle{opacity:.85;margin:0 12px 6px;font-size:clamp(13px,2.6vw,18px)}
+.subtitle b{color:var(--hot)}
+
+/* =========================================================================
+   LAYOUT
+   ========================================================================= */
+.stage{
+  position:relative;
+  width:min(92vw,560px);
+  margin:8px auto 0;
+}
+.wheel-wrap{
+  position:relative;
+  width:100%;
+  aspect-ratio:1/1;
+  margin:0 auto;
+  filter:drop-shadow(0 20px 40px rgba(0,0,0,.55));
+}
+.wheel-hub{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  padding:10px;
+  background:
+    conic-gradient(from 0deg,#ffe680,#ffb020,#ffe680,#ffb020,#ffe680,#ffb020,#ffe680,#ffb020,#ffe680);
+  box-shadow:0 0 0 6px #2a1440, inset 0 0 30px rgba(0,0,0,.35);
+}
+canvas.wheel{
+  display:block;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#120a24;
+  will-change:transform;
+}
+/* center cap + spin button */
+.center-cap{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:24%;
+  aspect-ratio:1/1;
+  border-radius:50%;
+  border:none;
+  cursor:pointer;
+  font-family:'Luckiest Guy',cursive;
+  font-size:clamp(13px,3.2vw,22px);
+  color:#3a1160;
+  background:radial-gradient(circle at 35% 30%,#fff,#ffd21f 55%,#ff9e00);
+  box-shadow:0 6px 0 #b8860b,0 10px 22px rgba(0,0,0,.5);
+  transition:transform .08s ease, box-shadow .08s ease;
+  z-index:6;
+  line-height:1;
+}
+.center-cap:hover{transform:translate(-50%,-50%) scale(1.05)}
+.center-cap:active{transform:translate(-50%,-48%) scale(.96);box-shadow:0 2px 0 #b8860b,0 4px 10px rgba(0,0,0,.5)}
+.center-cap:disabled{cursor:not-allowed;filter:grayscale(.3) brightness(.9)}
+
+/* pointer / ticker at top */
+.pointer{
+  position:absolute;
+  top:-2%;left:50%;
+  transform:translateX(-50%);
+  z-index:7;
+  width:10.5%;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.6));
+  transform-origin:50% 12%;   /* hinge near the top, like a pinned flapper */
+}
+.pointer svg{display:block;width:100%;height:auto}
+/* flapper gets knocked by a peg (tip swings with the wheel's motion) then snaps back */
+.pointer.tick{animation:tick .11s cubic-bezier(.3,.7,.4,1)}
+@keyframes tick{
+  0%  {transform:translateX(-50%) rotate(0deg)}
+  28% {transform:translateX(-50%) rotate(17deg)}
+  62% {transform:translateX(-50%) rotate(-5deg)}
+  100%{transform:translateX(-50%) rotate(0deg)}
+}
+
+/* =========================================================================
+   CONTROLS / HUD
+   ========================================================================= */
+.hud{
+  display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:center;align-items:center;
+  margin:16px auto 30px;max-width:560px;padding:0 12px;
+}
+.pill{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:999px;padding:8px 16px;font-weight:600;font-size:14px;
+}
+.pill b{color:var(--accent)}
+button.btn{
+  font-family:'Fredoka',sans-serif;font-weight:700;font-size:14px;
+  border:none;border-radius:999px;padding:9px 18px;cursor:pointer;
+  background:rgba(255,255,255,.1);color:var(--ink);
+  border:1px solid rgba(255,255,255,.18);
+  transition:transform .08s ease,background .15s ease;
+}
+button.btn:hover{background:rgba(255,255,255,.2);transform:translateY(-1px)}
+button.btn:active{transform:translateY(1px)}
+.recent{max-width:560px;margin:0 auto 40px;padding:0 14px;opacity:.75;font-size:13px;min-height:18px}
+.recent span{margin:0 4px}
+
+/* =========================================================================
+   RESULT BANNER
+   ========================================================================= */
+.overlay{
+  position:fixed;inset:0;z-index:50;display:none;
+  align-items:center;justify-content:center;padding:20px;
+}
+.overlay.show{display:flex}
+.scrim{position:absolute;inset:0;background:rgba(6,2,16,.72);backdrop-filter:blur(3px)}
+.result-card{
+  position:relative;z-index:2;
+  background:linear-gradient(160deg,#2a1450,#16294f);
+  border:3px solid var(--accent);
+  border-radius:24px;padding:26px 28px 22px;max-width:440px;width:100%;
+  box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 6px rgba(255,210,31,.15);
+  animation:pop .5s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes pop{0%{transform:scale(.4) rotate(-8deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.result-emoji{font-size:clamp(60px,18vw,110px);line-height:1;margin:2px 0 6px;display:block;animation:bob 1.1s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-10px) rotate(4deg)}}
+.result-lead{font-family:'Luckiest Guy',cursive;font-size:clamp(26px,7vw,46px);color:var(--accent);margin:2px 0;text-shadow:0 3px 0 #b8860b}
+.result-name{font-family:'Luckiest Guy',cursive;font-size:clamp(30px,8vw,54px);margin:0 0 6px;color:#fff;text-shadow:0 3px 12px rgba(255,46,106,.7)}
+.result-quip{font-size:clamp(15px,3.6vw,20px);opacity:.95;margin:6px 0 18px;min-height:24px}
+.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.result-actions .go{
+  background:linear-gradient(180deg,#ffe680,#ff9e00);color:#3a1160;font-weight:700;
+  border:none;border-radius:999px;padding:12px 26px;font-size:16px;cursor:pointer;font-family:'Fredoka',sans-serif;
+  box-shadow:0 5px 0 #b8860b;
+}
+.result-actions .go:active{transform:translateY(3px);box-shadow:0 2px 0 #b8860b}
+
+/* screen shake */
+.shake{animation:shake .55s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes shake{
+  10%,90%{transform:translate3d(-2px,0,0)}
+  20%,80%{transform:translate3d(4px,0,0)}
+  30%,50%,70%{transform:translate3d(-8px,0,0)}
+  40%,60%{transform:translate3d(8px,0,0)}
+}
+
+/* =========================================================================
+   DOORDASH TAKEOVER
+   ========================================================================= */
+#ddTakeover{
+  position:fixed;inset:0;z-index:80;display:none;overflow:hidden;
+  background:repeating-linear-gradient(45deg,#eb1700 0 40px,#b31100 40px 80px);
+}
+#ddTakeover.show{display:block;animation:ddflash .18s steps(1) 0s 8}
+@keyframes ddflash{0%{filter:brightness(1)}50%{filter:brightness(1.7) saturate(1.4)}100%{filter:brightness(1)}}
+.dd-word{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Luckiest Guy',cursive;color:#fff;font-size:clamp(40px,13vw,120px);
+  text-shadow:0 0 20px rgba(0,0,0,.6),0 6px 0 #7a0c00;text-align:center;white-space:nowrap;
+  animation:ddzoom 2.6s ease-in-out both;
+}
+@keyframes ddzoom{
+  0%{transform:translate(-50%,-50%) scale(0) rotate(-25deg);opacity:0}
+  25%{transform:translate(-50%,-50%) scale(1.2) rotate(6deg);opacity:1}
+  45%{transform:translate(-50%,-50%) scale(.95) rotate(-4deg)}
+  70%{transform:translate(-50%,-50%) scale(1.05) rotate(3deg)}
+  100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1}
+}
+.flyer{position:absolute;font-size:clamp(44px,10vw,90px);top:0;left:0;will-change:transform;pointer-events:none}
+
+/* =========================================================================
+   SECONDARY (DOORDASH) WHEEL MODAL
+   ========================================================================= */
+#ddWheelModal{
+  position:fixed;inset:0;z-index:70;display:none;align-items:flex-start;justify-content:center;
+  padding:24px 12px;overflow:auto;
+}
+#ddWheelModal.show{display:flex}
+.dd-panel{
+  position:relative;z-index:2;width:min(92vw,520px);margin:auto;
+  background:linear-gradient(160deg,#2a0a06,#3a0f0a);
+  border:3px solid #ff6a4d;border-radius:24px;padding:16px 16px 24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);
+}
+.dd-panel h2{font-family:'Luckiest Guy',cursive;color:#ff8a5c;margin:6px 0 2px;font-size:clamp(24px,6vw,40px)}
+.dd-panel .subtitle{margin-bottom:8px}
+
+/* rainbow boba mode */
+.boba-mode{animation:rainbowbg 1.2s linear infinite}
+@keyframes rainbowbg{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(360deg)}}
+
+/* =========================================================================
+   CHAOS MODE
+   ========================================================================= */
+.btn.active{background:linear-gradient(180deg,#ff6b6b,#ff2e6a);color:#fff;border-color:#ff2e6a;box-shadow:0 0 14px rgba(255,46,106,.6)}
+#chaosFlash{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0}
+#chaosFlash span{font-family:'Luckiest Guy',cursive;font-size:clamp(34px,10vw,92px);color:#fff;text-align:center;padding:0 16px;text-shadow:0 0 26px #ff2e6a,0 5px 0 #7a0c33;transform:rotate(-4deg)}
+#chaosFlash.go{animation:chaosFlash 1.3s ease-out}
+@keyframes chaosFlash{0%{opacity:0;transform:scale(.3) rotate(-8deg)}18%{opacity:1;transform:scale(1.12) rotate(3deg)}70%{opacity:1;transform:scale(1) rotate(-2deg)}100%{opacity:0;transform:scale(1.5)}}
+.chaos-wobble{animation:cWobble .3s ease-in-out infinite}
+@keyframes cWobble{
+  0%,100%{transform:rotate(-16deg) scale(1.03)}
+  25%    {transform:rotate(11deg) skewX(8deg) scale(.96)}
+  50%    {transform:rotate(17deg) scale(1.05)}
+  75%    {transform:rotate(-10deg) skewX(-8deg) scale(.95)}
+}
+.chaos-quake{animation:cQuake .05s linear infinite}
+@keyframes cQuake{
+  0%  {transform:translate(11px,-7px) rotate(-1.5deg)}
+  20% {transform:translate(-15px,9px) rotate(2deg)}
+  40% {transform:translate(13px,12px) rotate(-2deg)}
+  60% {transform:translate(-12px,-13px) rotate(1.5deg)}
+  80% {transform:translate(16px,5px) rotate(-1.5deg)}
+  100%{transform:translate(-9px,-9px) rotate(2deg)}
+}
+.chaos-rainbow{animation:cRainbow .5s linear infinite}
+@keyframes cRainbow{to{filter:hue-rotate(360deg)}}
+
+/* flick hint */
+.hint{opacity:.7;font-size:13px;margin:2px auto 10px;max-width:560px;padding:0 12px}
+.hint b{color:var(--accent)}
+
+/* =========================================================================
+   ADMIN PANEL
+   ========================================================================= */
+.admin-card{
+  position:relative;z-index:2;width:min(94vw,560px);max-height:86vh;overflow:auto;
+  background:linear-gradient(160deg,#241147,#132247);
+  border:3px solid var(--accent);border-radius:22px;padding:22px 22px 24px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);text-align:left;
+}
+.admin-card h2{font-family:'Luckiest Guy',cursive;color:var(--accent);margin:0 0 4px;font-size:28px;text-align:center}
+.admin-card h3{margin:20px 0 8px;font-size:16px;color:#fff;border-bottom:1px solid rgba(255,255,255,.15);padding-bottom:5px}
+.admin-x{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.1);border:none;color:var(--ink);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px}
+.admin-x:hover{background:var(--hot)}
+.admin-err{color:var(--hot);font-size:13px;margin-top:8px;min-height:16px;font-weight:600}
+.admin-note{font-size:12px;opacity:.65;margin:8px 0 0;line-height:1.4}
+.admin-list{display:flex;flex-direction:column;gap:8px}
+.admin-row{display:flex;gap:8px;align-items:center}
+.admin-row input.emoji{width:52px;text-align:center}
+.admin-row input.name{flex:1;min-width:0}
+.admin-row input.pct{width:64px;text-align:center}
+.admin-row input.aqui-pct{border:2px solid #2fbf71;box-shadow:0 0 9px rgba(47,191,113,.55)}
+.admin-row input.aqui-pct:focus{border-color:#2fbf71;outline:none}
+.admin-head{font-size:11px;opacity:.5;text-transform:uppercase;letter-spacing:.5px;padding:0 2px;margin-bottom:2px}
+.admin-head .emoji{width:52px;text-align:center}
+.admin-head .name{flex:1}
+.admin-head .pct{width:64px;text-align:center}
+.admin-head .del{width:38px;flex:0 0 auto}
+.admin-total{font-size:13px;font-weight:600;margin:9px 2px 0;opacity:.85}
+.admin-total.off{color:#ffb454}
+.admin-card input{
+  font-family:'Fredoka',sans-serif;font-size:15px;padding:9px 12px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:var(--ink);
+}
+.admin-card input:focus{outline:none;border-color:var(--accent)}
+.admin-row .del{background:rgba(255,46,106,.18);border:none;color:#ff7fa5;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:15px;flex:0 0 auto}
+.admin-row .del:hover{background:var(--hot);color:#fff}
+.admin-addrow{margin-top:10px}
+.admin-add{display:flex;gap:8px;margin-top:6px}
+.admin-add input{flex:1}
+.admin-balance{display:flex;gap:12px;flex-wrap:wrap}
+.admin-balance label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;opacity:.9}
+.admin-balance input{width:110px}
+.admin-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}
+.admin-card .go{background:linear-gradient(180deg,#ffe680,#ff9e00);color:#3a1160;font-weight:700;border:none;border-radius:999px;padding:11px 22px;font-size:15px;cursor:pointer;font-family:'Fredoka',sans-serif;box-shadow:0 4px 0 #b8860b}
+.admin-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 #b8860b}
+
+/* confetti + fx canvas layers */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:90}
+
+.footnote{opacity:.5;font-size:12px;margin:0 0 26px}
+</style>
+</head>
+<body>
+
+  <h1>KCK Lunch Wheel of Destiny</h1>
+  <p class="subtitle">Spin to decide lunch. Odds are <b>heavily</b> Aqui. Godspeed.</p>
+
+  <!-- ===================== MAIN WHEEL ===================== -->
+  <div class="stage" id="stage">
+    <div class="wheel-wrap">
+      <div class="pointer" id="pointer">
+        <svg viewBox="0 0 100 120" aria-hidden="true">
+          <polygon points="50,120 12,10 88,10" fill="#ff2e6a"/>
+          <polygon points="50,120 12,10 88,10" fill="none" stroke="#7a0c33" stroke-width="5"/>
+          <circle cx="50" cy="26" r="12" fill="#fff5e6"/>
+        </svg>
+      </div>
+      <div class="wheel-hub">
+        <canvas class="wheel" id="wheel" width="1000" height="1000"></canvas>
+      </div>
+      <button class="center-cap" id="spinBtn">SPIN</button>
+    </div>
+  </div>
+
+  <div class="hud">
+    <div class="pill">🥗 Aquis left: <b id="aquiCount">18</b></div>
+    <button class="btn" id="chaosBtn">🎲 Chaos: Off</button>
+    <button class="btn" id="resetBtn">↻ Reset wheel</button>
+    <button class="btn" id="muteBtn">🔊 Sound: On</button>
+    <button class="btn" id="adminBtn">⚙️ Admin</button>
+  </div>
+  <div class="hint">✋ Grab the wheel and whip it — or just press <b>SPIN</b>.</div>
+  <div class="recent" id="recent"></div>
+
+  <!-- ===================== RESULT BANNER ===================== -->
+  <div class="overlay" id="resultOverlay">
+    <div class="scrim" id="resultScrim"></div>
+    <div class="result-card" id="resultCard">
+      <span class="result-emoji" id="rEmoji">🎉</span>
+      <div class="result-lead" id="rLead">TODAY WE FEAST AT</div>
+      <div class="result-name" id="rName">Aqui</div>
+      <div class="result-quip" id="rQuip"></div>
+      <div class="result-actions">
+        <button class="go" id="rClose">LET'S GO 🚗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DOORDASH TAKEOVER ===================== -->
+  <div id="ddTakeover">
+    <div class="dd-word" id="ddWord">DOOR🛵DASH!!!</div>
+  </div>
+
+  <!-- ===================== DOORDASH WHEEL ===================== -->
+  <div id="ddWheelModal">
+    <div class="dd-panel">
+      <h2>🛵 DoorDash Roulette</h2>
+      <p class="subtitle">Too lazy to leave. The couch has spoken.</p>
+      <div class="wheel-wrap" style="filter:drop-shadow(0 14px 26px rgba(0,0,0,.5))">
+        <div class="pointer" id="ddPointer">
+          <svg viewBox="0 0 100 120" aria-hidden="true">
+            <polygon points="50,120 12,10 88,10" fill="#ffd21f"/>
+            <polygon points="50,120 12,10 88,10" fill="none" stroke="#7a5b00" stroke-width="5"/>
+            <circle cx="50" cy="26" r="12" fill="#fff5e6"/>
+          </svg>
+        </div>
+        <div class="wheel-hub" style="background:conic-gradient(from 0deg,#ffb3a0,#ff6a4d,#ffb3a0,#ff6a4d,#ffb3a0,#ff6a4d,#ffb3a0)">
+          <canvas class="wheel" id="ddWheel" width="1000" height="1000"></canvas>
+        </div>
+        <button class="center-cap" id="ddSpinBtn" style="color:#7a0c00;background:radial-gradient(circle at 35% 30%,#fff,#ff8a5c 55%,#eb1700)">SPIN</button>
+      </div>
+      <div class="hud">
+        <button class="btn" id="ddBackBtn">← Back to main wheel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ADMIN PANEL ===================== -->
+  <div class="overlay" id="adminModal">
+    <div class="scrim" id="adminScrim"></div>
+    <div class="admin-card">
+      <button class="admin-x" id="adminClose" aria-label="Close">✕</button>
+      <h2>⚙️ Admin</h2>
+
+      <div id="adminGate">
+        <p>Enter the admin passcode to edit the wheel.</p>
+        <div class="admin-add">
+          <input id="adminPass" type="password" placeholder="Passcode" autocomplete="off"/>
+          <button class="go" id="adminUnlock">Unlock</button>
+        </div>
+        <div id="adminErr" class="admin-err"></div>
+      </div>
+
+      <div id="adminEditor" style="display:none">
+        <h3>🍽️ Main wheel restaurants</h3>
+        <p class="admin-note">Pick Aqui %; rest autoscale.</p>
+        <div class="admin-row admin-head"><span class="emoji">Emoji</span><span class="name">Name</span><span class="pct">%</span><span class="del"></span></div>
+        <div id="adminRestaurants" class="admin-list"></div>
+        <div class="admin-total" id="pctTotal"></div>
+        <button class="btn admin-addrow" id="addRestBtn">+ Add restaurant</button>
+
+        <h3>🛵 DoorDash options</h3>
+        <p class="admin-note">The second wheel that opens when the main wheel lands on DoorDash.</p>
+        <div id="adminDoordash" class="admin-list"></div>
+        <button class="btn admin-addrow" id="addDdBtn">+ Add DoorDash option</button>
+
+        <div class="admin-actions">
+          <button class="btn" id="adminResetDefaults">↺ Reset to defaults</button>
+          <button class="go" id="adminSave">Save &amp; apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chaosFlash"></div>
+  <canvas id="fx"></canvas>
+  <p class="footnote">Built for the crew · may cause spontaneous celebration</p>
+
+<script>
+/* =========================================================================
+   1. CONFIG  —  DEFAULTS (editable at runtime via the ⚙️ Admin panel)
+   =========================================================================
+   These are just the starting values. Anyone with the admin passcode can add /
+   remove / rename spots and tweak the balance right in the browser, and it's
+   saved for next time. Editing here just changes the out-of-the-box defaults.
+*/
+const DEFAULT_RESTAURANTS = [
+  "Sushi Confidential",
+  "Doppio Zero",
+  "Water Tower",
+  "Hono Sushi",
+  "El Guapos",
+  "Blue Line",
+];
+
+const DEFAULT_DOORDASH = [
+  "Mendocino Farms",
+  "Adelitas",
+];
+
+// --- Wheel balance (defaults; editable in Admin) ---------------------------
+const DEFAULT_AQUI_PERCENT = 50;   // Aqui's default % of the wheel
+const MAX_WEDGES           = 48;   // safety cap on total main-wheel wedges
+const DD_COPIES            = 3;    // wedges per option on the DoorDash wheel
+const BOBA_SHARE           = 0.008;// ~0.8%  (the elusive <1% boba jackpot)
+
+// --- Admin ----------------------------------------------------------------
+const ADMIN_PASSCODE = "kck2024"; // change this; set to "" for no passcode
+
+// --- Flavor (all optional) -------------------------------------------------
+const FLAVOR = {
+  "aqui":               {emoji:"🥗", quips:[
+                          "Resistance was futile. It's Aqui.",
+                          "You always knew it would be Aqui.",
+                          "The wheel provides. The wheel provides Aqui.",
+                          "There is no escape. Only Aqui.",
+                          "The prophecy is fulfilled. It's Aqui.",
+                          "All roads lead to Aqui.",
+                          "Free will is an illusion. It's Aqui.",
+                          "The bowl was written in the stars.",
+                          "Deep down, you already knew. Aqui.",
+                          "The wheel has chosen, as it always does. Aqui.",
+                          "Struggle all you want. Aqui claims you.",
+                          "Once again, the salad calls you home."
+                        ]},
+  "boba":               {emoji:"🧋", quips:["A <1% MIRACLE. Sugar for everyone!","The prophecy is fulfilled. BOBA TIME.","Statistically this shouldn't have happened. Drink up."]},
+  "doordash":           {emoji:"🛵", quips:["Couch mode: ACTIVATED."]},
+  "sushi confidential": {emoji:"🍣", quips:["Time to get raw. 🍣","Say less. Rolls incoming.","Wasabi speedrun, go."]},
+  "doppio zero":        {emoji:"🍕", quips:["Carbo-load engaged.","Pizza is a personality trait today.","Andiamo. 🇮🇹"]},
+  "water tower":        {emoji:"🍔", quips:["Big meal energy.","Napkins. Bring napkins.","The tower calls."]},
+  "hono sushi":         {emoji:"🍱", quips:["Bento the knee.","Fish o'clock.","Elite lunch behavior."]},
+  "el guapos":          {emoji:"🌮", quips:["It's taco o'clock somewhere. It's here.","Guac is extra. You are worth it.","¡Órale!"]},
+  "blue line":          {emoji:"🍕", quips:["Ride the blue line to pizza town.","Slice o'clock. All aboard.","Lunch just got a green light."]},
+  "mendocino farms":    {emoji:"🥪", quips:["Sandwich supremacy.","Farm-to-couch pipeline.","A very respectable choice."]},
+  "adelitas":           {emoji:"🌯", quips:["Burrito the size of your forearm incoming.","Foil-wrapped happiness.","Adelitas never misses."]},
+};
+const DEFAULT_EMOJI = "🍴";
+const GENERIC_QUIPS = ["A bold choice. A correct choice.","The wheel has spoken. Obey.","Lunch destiny: locked in.","No takebacks. Grab your keys.","Chef's kiss. Let's roll."];
+
+// palette for non-Aqui slices (cycles if you add more than this many)
+const PALETTE = ["#ff6b6b","#4ecdc4","#ffd93d","#a06cd5","#ff9f45","#5aa9ff","#ff7fbf","#7bd389","#f77f00","#00b4d8","#c1121f","#8ac926"];
+const AQUI_COLOR = "#2fbf71";      // Aqui green (all Aqui slices share it)
+const BOBA_COLOR = "#ff8fd0";
+const DOORDASH_COLOR = "#eb1700";
+
+/* =========================================================================
+   1b. EDITABLE CONFIG (persisted) — managed via the Admin panel
+   ========================================================================= */
+const CONFIG_KEY = "kck-lunch-config-v2";
+const _norm = s => (s||"").trim().toLowerCase();
+// each main-wheel spot is { name, emoji, percent }. Aqui & DoorDash are just
+// rows too — their behaviour/colour is inferred from their name (see spotType).
+function mkSpot(name, emoji, percent){
+  const known = FLAVOR[_norm(name)];
+  const p = parseFloat(percent);
+  return {
+    name:(name||"").trim(),
+    emoji: (emoji && emoji.trim()) || (known && known.emoji) || DEFAULT_EMOJI,
+    percent: isFinite(p) ? p : undefined,
+  };
+}
+function defaultConfig(){
+  const others = DEFAULT_RESTAURANTS.length + 1;            // restaurants + DoorDash
+  const each   = Math.round((100 - DEFAULT_AQUI_PERCENT)/others * 10)/10;
+  const rests  = [ mkSpot("Aqui","🥗",DEFAULT_AQUI_PERCENT) ];
+  DEFAULT_RESTAURANTS.forEach(n=> rests.push(mkSpot(n, null, each)));
+  rests.push(mkSpot("DoorDash","🛵", each));
+  return { restaurants: rests, doordash: DEFAULT_DOORDASH.map(n=>mkSpot(n)) };
+}
+function loadConfig(){
+  try{
+    const c = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    if(c && Array.isArray(c.restaurants) && Array.isArray(c.doordash)){
+      return {
+        restaurants: c.restaurants.map(x=>mkSpot(x.name,x.emoji,x.percent)).filter(x=>x.name),
+        doordash:    c.doordash.map(x=>mkSpot(x.name,x.emoji)).filter(x=>x.name),
+      };
+    }
+  }catch(e){}
+  return defaultConfig();
+}
+function saveConfig(){ try{ localStorage.setItem(CONFIG_KEY, JSON.stringify(config)); }catch(e){} }
+let config = loadConfig();
+
+/* =========================================================================
+   2. STATE (persisted)
+   ========================================================================= */
+const STORE_KEY = "kck-lunch-wheel-v3";
+function loadState(){
+  try{ const s = JSON.parse(localStorage.getItem(STORE_KEY)); if(s && typeof s.aquiRemaining==="number") return { aquiRemaining:s.aquiRemaining, chaos:!!s.chaos }; }catch(e){}
+  return { aquiRemaining: aquiFullCount(), chaos:false };
+}
+function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){} }
+let state = loadState();
+
+/* =========================================================================
+   3. HELPERS
+   ========================================================================= */
+const $ = id => document.getElementById(id);
+const norm = s => s.trim().toLowerCase();
+function flavorFor(name){
+  const f = FLAVOR[norm(name)] || {};
+  return { emoji: f.emoji || DEFAULT_EMOJI, quips: (f.quips && f.quips.length) ? f.quips : GENERIC_QUIPS };
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* =========================================================================
+   4. SLICE MODEL
+   ========================================================================= */
+// Each spot gets a wedge count proportional to its % (see wedgeCounts), then
+// all wedges are shuffled into a fully random order around the wheel.
+// Special behaviour/colour is inferred from a spot's name.
+function spotType(s){
+  const n = _norm(s.name);
+  if(n==="aqui") return "aqui";
+  if(n==="doordash") return "doordash";
+  return "restaurant";
+}
+// How many wedges each spot gets: proportional to its %, with the smallest
+// spot getting 1 wedge (all wedges end up ~equal size). Capped at MAX_WEDGES.
+// e.g. Aqui 50% + five others at 10% → [5,1,1,1,1,1].
+function wedgeCounts(spots){
+  const pcts = spots.map(s=> Math.max(0.0001, s.percent||0));
+  const minP = Math.min(...pcts);
+  const sumP = pcts.reduce((a,b)=>a+b,0);
+  const unit = Math.max(minP, sumP/MAX_WEDGES);
+  return pcts.map(p=> Math.max(1, Math.round(p/unit)));
+}
+// Total Aqui wedges at full strength (before any get eaten).
+function aquiFullCount(){
+  const spots = config.restaurants;
+  const counts = wedgeCounts(spots);
+  let total = 0;
+  spots.forEach((s,i)=>{ if(spotType(s)==="aqui") total += counts[i]; });
+  return total;
+}
+
+function buildMainSlices(){
+  const slices = [];
+  const spots  = config.restaurants;
+  const counts = wedgeCounts(spots);
+  const sumP   = spots.reduce((a,s)=>a+Math.max(0.0001,s.percent||0),0);
+  let palI = 0;
+
+  spots.forEach((s,i)=>{
+    const type = spotType(s);
+    const full = counts[i];
+    const n    = type==="aqui" ? Math.min(state.aquiRemaining, full) : full; // Aqui shrinks as eaten
+    const color= type==="aqui" ? AQUI_COLOR : type==="doordash" ? DOORDASH_COLOR : PALETTE[(palI++) % PALETTE.length];
+    const wPer = Math.max(0.0001, s.percent||0) / full;                      // ~equal-size wedges
+    for(let c=0;c<n;c++)
+      slices.push({ type, name:s.name, emoji:s.emoji, color, weight:wPer });
+  });
+
+  // boba: fixed <1% sliver, sized relative to everything else
+  slices.push({ type:"boba", name:"Boba", emoji:"🧋", color:BOBA_COLOR, weight: sumP * (BOBA_SHARE/(1-BOBA_SHARE)) });
+
+  return shuffle(slices); // fully random order around the wheel
+}
+
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function buildDoordashSlices(){
+  const slices=[];
+  config.doordash.forEach((r,i)=>{
+    for(let c=0;c<DD_COPIES;c++)
+      slices.push({ type:"restaurant", name:r.name, emoji:r.emoji, color:PALETTE[i % PALETTE.length], weight:1 });
+  });
+  return shuffle(slices);
+}
+
+/* =========================================================================
+   5. WHEEL ENGINE
+   ========================================================================= */
+class Wheel {
+  constructor(canvas, pointerEl){
+    this.canvas = canvas;
+    this.ctx = canvas.getContext("2d");
+    this.pointerEl = pointerEl || null;   // flapper, driven directly during spin
+    this.rotation = 0;      // absolute degrees, clockwise
+    this.slices = [];
+    this.spinning = false;
+  }
+  setFlap(deg){ if(this.pointerEl && !this.flapDetached) this.pointerEl.style.transform = `translateX(-50%) rotate(${deg}deg)`; }
+  setSlices(slices){
+    // compute angles (0deg = top, clockwise)
+    const total = slices.reduce((s,x)=>s+x.weight,0);
+    let acc = 0;
+    this.slices = slices.map(s=>{
+      const sweep = (s.weight/total)*360;
+      const seg = {...s, a0:acc, a1:acc+sweep, mid:acc+sweep/2};
+      acc += sweep;
+      return seg;
+    });
+    this.draw();
+  }
+  draw(){
+    const ctx=this.ctx, S=this.canvas.width, cx=S/2, cy=S/2, r=S/2-6;
+    ctx.clearRect(0,0,S,S);
+    this.slices.forEach(s=>{
+      const r0 = (s.a0-90)*Math.PI/180, r1 = (s.a1-90)*Math.PI/180;
+      // wedge
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,r0,r1,false);
+      ctx.closePath();
+      ctx.fillStyle = s.color;
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(0,0,0,.18)";
+      ctx.stroke();
+      // label
+      const sweep = s.a1-s.a0;
+      const midR = (s.mid-90)*Math.PI/180;
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(midR);
+      ctx.textAlign="right";
+      ctx.textBaseline="middle";
+      const dark = ["#ffd93d","#2fbf71","#8ac926","#ff8fd0","#00b4d8","#4ecdc4"].includes(s.color);
+      ctx.fillStyle = dark ? "rgba(20,8,30,.92)" : "#fff";
+      if(sweep < 6){
+        // tiny slice (boba): just the emoji near the rim, upright-ish
+        ctx.font = `${Math.round(S*0.035)}px 'Fredoka',sans-serif`;
+        ctx.textAlign="center";
+        ctx.fillText(s.emoji, r*0.82, 0);
+      }else{
+        const fs = Math.max(S*0.026, Math.min(S*0.052, sweep*S*0.0016));
+        ctx.font = `700 ${fs}px 'Fredoka',sans-serif`;
+        const label = s.emoji+"  "+s.name;
+        ctx.fillText(label, r-18, 0);
+      }
+      ctx.restore();
+    });
+    // pegs / pins at every slice boundary — the flapper clicks past each one
+    this.slices.forEach(s=>{
+      const a=(s.a0-90)*Math.PI/180;
+      const px=cx+Math.cos(a)*r*0.955, py=cy+Math.sin(a)*r*0.955;
+      const pr=Math.max(4,S*0.0135);
+      ctx.beginPath(); ctx.arc(px,py,pr*1.15,0,Math.PI*2);   // subtle shadow base
+      ctx.fillStyle="rgba(0,0,0,.25)"; ctx.fill();
+      const g=ctx.createRadialGradient(px-pr*0.4,py-pr*0.4,pr*0.15,px,py,pr);
+      g.addColorStop(0,"#ffffff"); g.addColorStop(.45,"#e3e7ee"); g.addColorStop(1,"#8a8f9c");
+      ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2);
+      ctx.fillStyle=g; ctx.fill();
+      ctx.lineWidth=Math.max(1.5,S*0.002); ctx.strokeStyle="rgba(30,20,40,.5)"; ctx.stroke();
+    });
+    this.canvas.style.transform = `rotate(${this.rotation}deg)`;
+  }
+  // angle currently under the top pointer, in wheel (0=top) coordinates
+  pointerAngle(){ return ((360 - (this.rotation % 360)) % 360 + 360) % 360; }
+  sliceAt(angle){
+    return this.slices.find(s => angle >= s.a0 && angle < s.a1) || this.slices[this.slices.length-1];
+  }
+  spin(onTick, onDone, opts={}){
+    if(this.spinning || this.slices.length===0) return;
+    this.spinning = true;
+
+    // pick winner weighted by slice size (fair)
+    const total = this.slices.reduce((s,x)=>s+(x.a1-x.a0),0);
+    let roll = Math.random()*total, winner=this.slices[0];
+    for(const s of this.slices){ roll -= (s.a1-s.a0); if(roll<=0){ winner=s; break; } }
+
+    // land in the MIDDLE of the winner slice (small jitter) so the flapper
+    // clearly points at it, never grazing the edge next to a neighbour
+    const wWin = winner.a1 - winner.a0;
+    const targetAngle = (winner.a0 + wWin/2) + (Math.random()-0.5) * (wWin*0.30);
+
+    const dir = opts.direction===-1 ? -1 : 1;                       // reverse spin?
+    const turns = opts.turns!=null ? opts.turns : (6 + Math.floor(Math.random()*3)); // warp speed = more turns
+    const requiredMod = (360 - targetAngle) % 360;
+    let final;
+    if(dir>0){
+      final = this.rotation + turns*360;
+      final += (requiredMod - (((final % 360)+360)%360) + 360) % 360;
+    }else{
+      final = this.rotation - turns*360;
+      final -= ((((final % 360)+360)%360) - requiredMod + 360) % 360;
+    }
+
+    const start = this.rotation, dist = final-start;
+    const dur = opts.duration!=null ? opts.duration : (9500 + Math.random()*2500); // longer spin for the SPIN.mp3
+    const t0 = performance.now();
+    let lastIdx = -1;
+    const ease = t => 1 - Math.pow(1-t, 4); // easeOutQuart
+    const MAXFLAP = 24;                      // peak flapper deflection (deg)
+
+    const frame = (now)=>{
+      const t = Math.min(1,(now-t0)/dur);
+      this.rotation = start + dist*ease(t);
+      this.canvas.style.transform = `rotate(${this.rotation}deg)`;
+      const pa = this.pointerAngle();
+      const s = this.sliceAt(pa);
+      const idx = this.slices.indexOf(s);
+      if(idx!==lastIdx){ lastIdx=idx; onTick && onTick(); }
+      // Drive the flapper straight off the wheel position: deflection peaks
+      // between pegs and returns at each peg. Flap rate == peg-pass rate, so it
+      // buzzes when fast and eases to slow clicks as the wheel winds down.
+      const w = Math.max(0.0001, s.a1 - s.a0);
+      const entry = dir>0 ? s.a1 : s.a0;
+      let frac = Math.abs(pa - entry) / w; frac = frac<0?0:frac>1?1:frac;
+      this.setFlap((dir * MAXFLAP * Math.sin(frac*Math.PI)).toFixed(2));
+      if(t<1){ requestAnimationFrame(frame); }
+      else{
+        this.rotation = ((final % 360)+360)%360;
+        this.canvas.style.transform = `rotate(${this.rotation}deg)`;
+        this.setFlap(0);
+        this.spinning = false;
+        onDone && onDone(winner);
+      }
+    };
+    requestAnimationFrame(frame);
+  }
+}
+
+/* =========================================================================
+   6. SOUND (Web Audio, no files)
+   ========================================================================= */
+let audioCtx=null, muted=false;
+function ac(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return audioCtx; }
+function tone(freq,dur,type="square",vol=0.15,when=0){
+  if(muted) return; const c=ac(); if(!c) return;
+  const t=c.currentTime+when;
+  const o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.02);
+}
+const sTick   = ()=>tone(1200,0.03,"square",0.05);
+function sFanfare(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.32,"triangle",0.18,i*0.1)); }
+function sJackpot(){ const n=[523,659,784,1047,1319,1568]; n.forEach((f,i)=>tone(f,0.25,"square",0.16,i*0.07)); n.reverse().forEach((f,i)=>tone(f,0.2,"triangle",0.12,0.5+i*0.06)); }
+function sAirhorn(){
+  if(muted) return; const c=ac(); if(!c) return; const t=c.currentTime;
+  [0,0.18,0.36].forEach(off=>{
+    const o=c.createOscillator(), g=c.createGain(), o2=c.createOscillator();
+    o.type="sawtooth"; o.frequency.setValueAtTime(220,t+off); o.frequency.linearRampToValueAtTime(210,t+off+0.15);
+    o2.type="sawtooth"; o2.frequency.setValueAtTime(277,t+off);
+    g.gain.setValueAtTime(0,t+off); g.gain.linearRampToValueAtTime(0.2,t+off+0.02);
+    g.gain.setValueAtTime(0.2,t+off+0.13); g.gain.exponentialRampToValueAtTime(0.001,t+off+0.16);
+    o.connect(g); o2.connect(g); g.connect(c.destination);
+    o.start(t+off); o2.start(t+off); o.stop(t+off+0.17); o2.stop(t+off+0.17);
+  });
+}
+
+/* ---- Sound files (in the ./sounds folder) --------------------------------
+   yay*  -> random cheer when you land somewhere
+   intro* -> random fanfare when the app launches
+   Files load via relative paths, so they play when index.html is opened
+   normally (with the sounds folder next to it), not inside a data: preview. */
+const SOUND_DIR   = "sounds/";
+const YAY_FILES   = ["yay1.mp3","yay2.wav","yay3.wav","yay4.wav","yay5.wav","yay6.wav","yay7.wav","yay8.wav"];
+const INTRO_FILES = ["intro1.aiff","intro2.wav","intro3.mp3","intro4.wav"];
+// play one random file from a list; if a format won't load, try the next
+function playFrom(list, vol){
+  if(muted) return;
+  const files = shuffle(list); let i=0;
+  const tryNext=()=>{ if(i>=files.length) return;
+    const a=new Audio(SOUND_DIR+files[i++]); a.volume=vol;
+    a.play().catch(()=>tryNext());
+  };
+  tryNext();
+}
+function playRandomYay(){ playFrom(YAY_FILES, 0.85); }
+
+let introStarted = false, introAudio = null;
+function playLaunchFanfare(){
+  if(introStarted || muted) return;
+  const files = shuffle(INTRO_FILES); let i=0;
+  const tryNext=()=>{ if(i>=files.length) return;
+    const a=new Audio(SOUND_DIR+files[i++]); a.volume=0.7;
+    a.addEventListener("playing", ()=>{ introStarted=true; introAudio=a; }, {once:true});
+    a.play().catch(()=>tryNext());
+  };
+  tryNext();
+}
+function stopFanfare(){ introStarted=true; if(introAudio){ try{ introAudio.pause(); }catch(e){} introAudio=null; } }
+
+// SPIN.mp3 plays while the wheel is spinning. It's ~37s and the front is slow,
+// so we preload it and start partway in (with a little randomness), then fade
+// it out the moment the wheel stops.
+let spinTrack = null, spinFade = null;
+function initSpinTrack(){
+  try{ spinTrack = new Audio(SOUND_DIR+"SPIN.mp3"); spinTrack.preload="auto"; spinTrack.volume=0.75; spinTrack.load(); }catch(e){}
+}
+function startSpinSound(){
+  if(muted || !spinTrack) return;
+  if(spinFade){ clearInterval(spinFade); spinFade=null; }
+  try{
+    spinTrack.pause();
+    const d = spinTrack.duration;
+    const offset = 10 + Math.random()*8;                 // start "in the middle", past the slow intro
+    spinTrack.currentTime = (isFinite(d) && d>offset+4) ? offset : 0;
+    spinTrack.volume = 0.75;
+    spinTrack.play().catch(()=>{});
+  }catch(e){}
+}
+function stopSpinSound(instant){
+  if(!spinTrack) return;
+  if(spinFade){ clearInterval(spinFade); spinFade=null; }
+  if(instant){ try{ spinTrack.pause(); }catch(e){} return; }
+  let v = spinTrack.volume;
+  spinFade = setInterval(()=>{ v-=0.12; if(v<=0){ clearInterval(spinFade); spinFade=null; try{ spinTrack.pause(); }catch(e){} } else { try{ spinTrack.volume=v; }catch(e){} } }, 40);
+}
+
+/* =========================================================================
+   7. CONFETTI / FX
+   ========================================================================= */
+const fx = $("fx"), fxc = fx.getContext("2d");
+let particles=[], fxRunning=false;
+function sizeFx(){ fx.width=innerWidth; fx.height=innerHeight; }
+sizeFx(); addEventListener("resize", sizeFx);
+function burst(n, opts={}){
+  const colors = opts.colors || ["#ffd21f","#ff2e6a","#4ecdc4","#a06cd5","#7bd389","#ff9f45","#5aa9ff"];
+  const cx = opts.x!=null?opts.x:innerWidth/2, cy = opts.y!=null?opts.y:innerHeight*0.35;
+  for(let i=0;i<n;i++){
+    const ang=Math.random()*Math.PI*2, sp=4+Math.random()*11;
+    particles.push({
+      x:cx, y:cy, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp-6,
+      g:0.22+Math.random()*0.12, life:1, decay:0.006+Math.random()*0.01,
+      size:6+Math.random()*10, color:pick(colors), rot:Math.random()*6, vr:(Math.random()-0.5)*0.4,
+      shape:Math.random()<0.25?"circ":"rect", emoji:opts.emoji&&Math.random()<0.28?pick(opts.emoji):null
+    });
+  }
+  if(!fxRunning){ fxRunning=true; requestAnimationFrame(stepFx); }
+}
+function stepFx(){
+  fxc.clearRect(0,0,fx.width,fx.height);
+  particles = particles.filter(p=>p.life>0 && p.y<fx.height+40);
+  particles.forEach(p=>{
+    p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life-=p.decay;
+    fxc.save(); fxc.globalAlpha=Math.max(0,p.life); fxc.translate(p.x,p.y); fxc.rotate(p.rot);
+    if(p.emoji){ fxc.font=`${p.size*2.6}px serif`; fxc.textAlign="center"; fxc.fillText(p.emoji,0,0); }
+    else{ fxc.fillStyle=p.color;
+      if(p.shape==="circ"){ fxc.beginPath(); fxc.arc(0,0,p.size/2,0,7); fxc.fill(); }
+      else fxc.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+    }
+    fxc.restore();
+  });
+  if(particles.length){ requestAnimationFrame(stepFx); } else { fxRunning=false; fxc.clearRect(0,0,fx.width,fx.height); }
+}
+
+/* =========================================================================
+   8. CELEBRATIONS
+   ========================================================================= */
+function shakeScreen(){ document.body.classList.remove("shake"); void document.body.offsetWidth; document.body.classList.add("shake"); }
+
+// Big fireworks + confetti show — bursts popping from random points across the
+// screen, like the boba jackpot. Used for every landing.
+function fireworks(opts={}){
+  const emoji  = opts.emoji || ["🎉","✨","🎊","⭐","💥","🥳"];
+  const colors = opts.colors;
+  const rounds = opts.rounds || 8;
+  burst(150, {emoji, colors});                                  // big central pop
+  let n=0;
+  const shoot=()=>{
+    burst(60, { x: innerWidth*(0.1+Math.random()*0.8), y: innerHeight*(0.12+Math.random()*0.5), emoji, colors });
+    if(++n<rounds) setTimeout(shoot, 150);
+  };
+  shoot();
+}
+
+function showResult(winner, {lead, isBoba=false}={}){
+  const f = flavorFor(winner.name);
+  $("rEmoji").textContent = winner.emoji || f.emoji;
+  $("rLead").textContent = lead || "TODAY WE FEAST AT";
+  $("rName").textContent = winner.name;
+  $("rQuip").textContent = pick(f.quips);
+  const card = $("resultCard");
+  card.classList.toggle("boba-mode", isBoba);
+  $("resultOverlay").classList.add("show");
+}
+function hideResult(){ $("resultOverlay").classList.remove("show"); }
+
+function celebrateRestaurant(winner){
+  shakeScreen(); playRandomYay();
+  fireworks({emoji:[winner.emoji,"🎉","✨","🎊","⭐","🥳"]});
+  showResult(winner,{});
+}
+function celebrateAqui(winner, removed){
+  shakeScreen(); playRandomYay();
+  fireworks({emoji:["🥗","🥑","🎉","💚","✨","🎊"], colors:["#2fbf71","#7bd389","#ffd21f","#8ac926","#ff2e6a"]});
+  showResult(winner,{lead:"BACK TO"});
+  if(removed){
+    const msg = removed===1 ? "1 Aqui slice vanishes 💥" : `${removed} Aqui slices vanish 💥`;
+    $("rQuip").innerHTML += ` <span style="opacity:.75">· ${msg}</span>`;
+  }
+}
+function celebrateBoba(winner){
+  // rare jackpot freakout — the OG crazy celebration
+  document.body.classList.add("boba-mode");
+  sJackpot(); shakeScreen(); playRandomYay();
+  const bobaEmoji=["🧋","💖","✨","🌈","🎉","🫧"];
+  let n=0; const iv=setInterval(()=>{ burst(130,{emoji:bobaEmoji, x:innerWidth*Math.random(), y:innerHeight*(0.15+Math.random()*0.45)}); if(++n>9){clearInterval(iv); document.body.classList.remove("boba-mode");} },220);
+  showResult(winner,{lead:"🧋 JACKPOT!!! 🧋", isBoba:true});
+}
+
+/* =========================================================================
+   9. DOORDASH TAKEOVER + SECONDARY WHEEL
+   ========================================================================= */
+const ddWheel = new Wheel($("ddWheel"), $("ddPointer"));
+function doordashTakeover(){
+  sAirhorn(); shakeScreen();
+  const to = $("ddTakeover"); to.classList.add("show");
+  // flying delivery emojis
+  const emojis=["🛵","📦","🚗","🍔","🥡","💨","🌯","🍕"];
+  for(let i=0;i<14;i++){
+    const s=document.createElement("div"); s.className="flyer"; s.textContent=pick(emojis);
+    const y=Math.random()*innerHeight; const dir=Math.random()<0.5?1:-1;
+    s.style.top=y+"px"; s.style.left=dir>0?"-15vw":"115vw";
+    to.appendChild(s);
+    const dx=(dir>0?1:-1)*(innerWidth*1.4);
+    const delay=Math.random()*1.2, dur=1+Math.random()*1.1;
+    s.animate([
+      {transform:`translate(0,0) rotate(0deg)`},
+      {transform:`translate(${dx}px,${(Math.random()-0.5)*160}px) rotate(${dir*720}deg)`}
+    ],{duration:dur*1000, delay:delay*1000, easing:"ease-in", fill:"forwards"});
+  }
+  setTimeout(sAirhorn, 900);
+  burst(120,{colors:["#eb1700","#ff6a4d","#ffd21f","#fff"], y:innerHeight*0.4});
+  setTimeout(()=>{
+    to.classList.remove("show");
+    to.querySelectorAll(".flyer").forEach(f=>f.remove());
+    openDoordashWheel();
+  }, 2800);
+}
+function openDoordashWheel(){
+  ddWheel.setSlices(buildDoordashSlices());
+  ddWheel.rotation = 0; ddWheel.draw();
+  $("ddWheelModal").classList.add("show");
+}
+
+/* =========================================================================
+   10. WIRING — MAIN WHEEL
+   ========================================================================= */
+const mainWheel = new Wheel($("wheel"), $("pointer"));
+function rebuildMain(){ mainWheel.setSlices(buildMainSlices()); updateHud(); }
+function updateHud(){ $("aquiCount").textContent = state.aquiRemaining; }
+
+function tickMain(){} // no click sound — only SPIN.mp3 plays during a spin (flapper motion is driven in Wheel.spin)
+
+/* ---- CHAOS MODE ---- */
+const mainHub = ()=> $("stage").querySelector(".wheel-hub");
+function chaosFlash(text){
+  const el=$("chaosFlash"); el.innerHTML=`<span>${text}</span>`;
+  el.classList.remove("go"); void el.offsetWidth; el.classList.add("go");
+}
+// Boba Storm: every Aqui slice turns into boba for this one spin (odds go wild).
+function bobaStorm(){
+  const slices = buildMainSlices().map(s => s.type==="aqui"
+    ? {...s, type:"boba", name:"Boba", emoji:"🧋", color:BOBA_COLOR} : s);
+  mainWheel.setSlices(slices);
+}
+// EARTHQUAKE gag: the flapper snaps off its post and tumbles around inside the
+// wheel with gravity, bouncing off the rim and the center hub. Returns a stop().
+function startFlapperBounce(){
+  const wrap = $("stage").querySelector(".wheel-wrap");
+  const el = $("pointer");
+  const W = wrap.clientWidth, cx = W/2, cy = W/2;
+  const size = el.offsetWidth || W*0.105, rad = size*0.5;
+  const R = W*0.5 - rad;       // inner limit of the rim
+  const hubR = W*0.12 + rad;   // outer limit of the center cap
+  let x = cx, y = W*0.06;
+  let vx = (Math.random()<0.5?-1:1)*(7+Math.random()*6), vy = 2+Math.random()*3;
+  let a = 0, va = (Math.random()<0.5?-1:1)*(12+Math.random()*16);
+  let raf, running = true;
+  el.style.transition="none"; el.style.transformOrigin="50% 50%";
+  el.style.left="0"; el.style.top="0";
+  const bounce=(nx,ny,damp)=>{ const dot=vx*nx+vy*ny; vx=(vx-2*dot*nx)*damp; vy=(vy-2*dot*ny)*damp; va=va*0.85+(Math.random()-0.5)*20; };
+  const step=()=>{
+    if(!running) return;
+    vy += 0.9; x += vx; y += vy; a += va;
+    const dx=x-cx, dy=y-cy, d=Math.hypot(dx,dy)||1;
+    if(d>R){ const nx=dx/d, ny=dy/d; x=cx+nx*R; y=cy+ny*R; bounce(nx,ny,0.74); }
+    const hd=Math.hypot(dx,dy)||1;
+    if(hd<hubR){ const nx=dx/hd, ny=dy/hd; x=cx+nx*hubR; y=cy+ny*hubR; bounce(nx,ny,0.8); }
+    el.style.transform=`translate(${(x-size/2).toFixed(1)}px,${(y-size/2).toFixed(1)}px) rotate(${a.toFixed(1)}deg)`;
+    raf=requestAnimationFrame(step);
+  };
+  raf=requestAnimationFrame(step);
+  return ()=>{ running=false; cancelAnimationFrame(raf);
+    const pos={x,y,cx,cy};                       // where the flapper came to rest
+    el.style.transition=""; el.style.transformOrigin=""; el.style.left=""; el.style.top="";
+    el.style.transform="translateX(-50%) rotate(0deg)";
+    return pos; };
+}
+// Which slice sits under a point (px, in wheel-wrap coords), given the wheel's rotation.
+function sliceUnderPoint(wheel, pos){
+  const dx=pos.x-pos.cx, dy=pos.y-pos.cy;
+  let screenAng = Math.atan2(dx, -dy) * 180/Math.PI;   // 0 = top, clockwise
+  const phi = (((screenAng - wheel.rotation) % 360) + 360) % 360;
+  return wheel.sliceAt(phi);
+}
+
+// Roll a random curveball for a chaos-mode spin (or null = a normal spin).
+let lastChaosLabel = null;
+function rollChaos(){
+  if(Math.random() < 0.18){ lastChaosLabel = null; return null; } // keep it unpredictable
+  const menu = [
+    ()=>({label:"⚡ WARP SPEED ⚡",   spin:{turns:200+Math.floor(Math.random()*160)}}),
+    ()=>({label:"🔄 REVERSE-O-RAMA",  spin:{direction:-1}}),
+    ()=>({label:"🧋 BOBA STORM!",     boba:true}),
+    ()=>({label:"🥴 DRUNK WHEEL",     hubClass:"chaos-wobble"}),
+    ()=>({label:"🌋 EARTHQUAKE!",     stageClass:"chaos-quake", flapperFall:true}),
+    ()=>({label:"🌈 DISCO INFERNO",   canvasClass:"chaos-rainbow"}),
+    ()=>({label:"💥 TURBO REVERSE",   spin:{direction:-1, turns:200+Math.floor(Math.random()*140)}}),
+    ()=>({label:"🌪️ TOTAL CHAOS!!!",  spin:{turns:220+Math.floor(Math.random()*180), direction:Math.random()<0.5?-1:1}, hubClass:"chaos-wobble", canvasClass:"chaos-rainbow", stageClass:"chaos-quake"}),
+  ];
+  let e;
+  for(let i=0;i<8;i++){ e = pick(menu)(); if(e.label !== lastChaosLabel) break; } // no back-to-back repeats
+  lastChaosLabel = e.label;
+  return e;
+}
+
+let recent=[];
+function logRecent(winner){
+  recent.unshift((winner.emoji||"🍴")+" "+winner.name);
+  recent = recent.slice(0,6);
+  $("recent").innerHTML = "Recent: " + recent.map(r=>`<span>${r}</span>`).join("·");
+}
+
+// baseOpts carries flick power (turns/direction/duration); chaos effects, if any,
+// take precedence so warp/reverse still feel like chaos.
+function launchSpin(baseOpts={}){
+  ac(); // unlock audio on gesture
+  if(mainWheel.spinning) return;
+  stopFanfare();               // silence the launch fanfare once we start spinning
+  $("spinBtn").disabled = true;
+
+  // chaos mode: maybe roll a curveball for this spin
+  const fx = state.chaos ? rollChaos() : null;
+  const cleanups = [];
+  let quakePos = null; // where the fallen flapper lands (earthquake only)
+  const spinOpts = Object.assign({}, baseOpts, (fx && fx.spin) ? fx.spin : {});
+  if(fx){
+    chaosFlash(fx.label);
+    if(fx.boba) bobaStorm();
+    const addCls=(el,cls)=>{ if(el&&cls){ el.classList.add(cls); cleanups.push(()=>el.classList.remove(cls)); } };
+    addCls(mainHub(),  fx.hubClass);
+    addCls($("wheel"), fx.canvasClass);
+    addCls($("stage"), fx.stageClass);
+    if(fx.flapperFall){ mainWheel.flapDetached=true; const stop=startFlapperBounce(); cleanups.push(()=>{ mainWheel.flapDetached=false; quakePos=stop(); }); }
+  }
+
+  startSpinSound();
+  mainWheel.spin(tickMain, (winner)=>{
+    stopSpinSound();
+    cleanups.forEach(fn=>fn());
+    $("spinBtn").disabled = false;
+    // Earthquake: the fallen flapper decides — winner is whatever it rests on.
+    if(quakePos) winner = sliceUnderPoint(mainWheel, quakePos);
+    logRecent(winner);
+    if(winner.type==="doordash"){
+      doordashTakeover();
+    }else if(winner.type==="boba"){
+      celebrateBoba(winner);
+    }else if(winner.type==="aqui"){
+      // remove 1-3 Aqui wedges (randomly); the wheel re-sizes & re-shuffles the
+      // remaining wedges on the next build — persisted until reset
+      const removed = Math.min(state.aquiRemaining, 1 + Math.floor(Math.random()*3));
+      state.aquiRemaining = Math.max(0, state.aquiRemaining - removed);
+      saveState();
+      celebrateAqui(winner, removed);
+      // wheel visibly re-shuffles with fewer Aquis once the banner is dismissed
+    }else{
+      celebrateRestaurant(winner);
+    }
+  }, spinOpts);
+}
+$("spinBtn").addEventListener("click", ()=> launchSpin());
+
+$("rClose").addEventListener("click", ()=>{
+  hideResult();
+  document.body.classList.remove("boba-mode");
+  rebuildMain(); // re-scatter (and reflect any removed Aqui)
+});
+$("resultScrim").addEventListener("click", ()=>{ /* keep modal; require button */ });
+
+$("resetBtn").addEventListener("click", ()=>{
+  state.aquiRemaining = aquiFullCount(); saveState(); rebuildMain();
+  burst(60,{colors:["#2fbf71","#ffd21f"],emoji:["🥗","↻"]});
+});
+
+$("muteBtn").addEventListener("click", ()=>{
+  muted=!muted; $("muteBtn").textContent = muted ? "🔇 Sound: Off" : "🔊 Sound: On";
+});
+
+function updateChaosBtn(){
+  $("chaosBtn").textContent = state.chaos ? "🎲 Chaos: ON" : "🎲 Chaos: Off";
+  $("chaosBtn").classList.toggle("active", state.chaos);
+}
+$("chaosBtn").addEventListener("click", ()=>{
+  state.chaos = !state.chaos; saveState(); updateChaosBtn();
+  if(state.chaos) chaosFlash("🎲 CHAOS UNLEASHED");
+});
+
+/* =========================================================================
+   ADMIN PANEL
+   ========================================================================= */
+let adminUnlocked = false;
+function openAdmin(){
+  $("adminErr").textContent = "";
+  $("adminPass").value = "";
+  const needPass = ADMIN_PASSCODE && ADMIN_PASSCODE.length > 0 && !adminUnlocked;
+  $("adminGate").style.display   = needPass ? "" : "none";
+  $("adminEditor").style.display = needPass ? "none" : "";
+  if(!needPass) renderAdmin();
+  $("adminModal").classList.add("show");
+  if(needPass) setTimeout(()=>$("adminPass").focus(), 50);
+}
+function closeAdmin(){ $("adminModal").classList.remove("show"); }
+
+function adminRow(container, spot, withPct){
+  const row = document.createElement("div");
+  row.className = "admin-row";
+  const em = document.createElement("input");  em.className="emoji"; em.maxLength=4; em.value=spot? spot.emoji:""; em.placeholder="🍴";
+  const nm = document.createElement("input");  nm.className="name";  nm.value=spot? spot.name:"";  nm.placeholder="Name";
+  row.append(em, nm);
+  if(withPct){
+    const pc = document.createElement("input"); pc.className="pct"; pc.type="number"; pc.min="0"; pc.step="1";
+    if(spot && _norm(spot.name)==="aqui") pc.classList.add("aqui-pct"); // highlight the primary edit box
+    pc.value = (spot && spot.percent!=null) ? spot.percent : 10;
+    // editing Aqui's % auto-splits the remainder equally across the other spots
+    pc.addEventListener("input", ()=>{ if(_norm(nm.value)==="aqui") redistributeFromAqui(); updatePctTotal(); });
+    row.append(pc);
+  }
+  const del= document.createElement("button"); del.className="del"; del.textContent="✕";
+  del.onclick=()=>{ row.remove(); updatePctTotal(); };
+  row.append(del);
+  container.appendChild(row);
+  return row;
+}
+function renderList(container, spots, withPct){
+  container.innerHTML = "";
+  spots.forEach(s=> adminRow(container, s, withPct));
+}
+function collectList(container, withPct){
+  return [...container.querySelectorAll(".admin-row")].map(row=>{
+    const em = row.querySelector(".emoji").value.trim();
+    const nm = row.querySelector(".name").value.trim();
+    const pc = withPct ? parseFloat(row.querySelector(".pct").value) : undefined;
+    return nm ? mkSpot(nm, em, isFinite(pc) ? pc : (withPct ? 10 : undefined)) : null;
+  }).filter(Boolean);
+}
+// Split (100 − Aqui%) equally across every other spot's % field.
+function redistributeFromAqui(){
+  const rows = [...$("adminRestaurants").querySelectorAll(".admin-row")];
+  const aquiRow = rows.find(r=> _norm(r.querySelector(".name").value)==="aqui");
+  if(!aquiRow) return;
+  const others = rows.filter(r=> r!==aquiRow);
+  if(!others.length) return;
+  const aquiPct = Math.min(100, Math.max(0, parseFloat(aquiRow.querySelector(".pct").value)||0));
+  const each = Math.round(((100 - aquiPct)/others.length)*10)/10;
+  others.forEach(r=> r.querySelector(".pct").value = each);
+}
+function updatePctTotal(){
+  let sum = 0;
+  $("adminRestaurants").querySelectorAll(".pct").forEach(p=>{ const v=parseFloat(p.value); if(isFinite(v)) sum+=v; });
+  const off = Math.abs(sum-100) > 0.5;
+  const el = $("pctTotal");
+  el.textContent = "Total: " + (Math.round(sum*10)/10) + "%" + (off ? "  · tip: percentages usually add up to 100" : "  ✓");
+  el.classList.toggle("off", off);
+}
+function renderAdmin(){
+  renderList($("adminRestaurants"), config.restaurants, true);
+  renderList($("adminDoordash"),    config.doordash,    false);
+  updatePctTotal();
+}
+function saveAdmin(){
+  const rests = collectList($("adminRestaurants"), true);
+  const dds   = collectList($("adminDoordash"),    false);
+  if(rests.length === 0){ alert("Add at least one main-wheel restaurant."); return; }
+  config.restaurants = rests;
+  config.doordash    = dds.length ? dds : config.doordash;
+  saveConfig();
+  state.aquiRemaining = aquiFullCount(); // reset Aqui progress to the new full count
+  saveState();
+  rebuildMain();
+  burst(70,{colors:["#ffd21f","#2fbf71","#5aa9ff"],emoji:["⚙️","✅","🍴"]});
+  closeAdmin();
+}
+$("adminBtn").addEventListener("click", openAdmin);
+$("adminClose").addEventListener("click", closeAdmin);
+$("adminScrim").addEventListener("click", closeAdmin);
+$("adminUnlock").addEventListener("click", ()=>{
+  if($("adminPass").value === ADMIN_PASSCODE){
+    adminUnlocked = true;
+    $("adminGate").style.display="none";
+    $("adminEditor").style.display="";
+    renderAdmin();
+  }else{
+    $("adminErr").textContent = "Wrong passcode.";
+  }
+});
+$("adminPass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("adminUnlock").click(); });
+$("addRestBtn").addEventListener("click", ()=>{ adminRow($("adminRestaurants"), null, true).querySelector(".name").focus(); updatePctTotal(); });
+$("addDdBtn").addEventListener("click",   ()=> adminRow($("adminDoordash"), null, false).querySelector(".name").focus());
+$("adminSave").addEventListener("click", saveAdmin);
+$("adminResetDefaults").addEventListener("click", ()=>{
+  if(confirm("Reset all restaurants, DoorDash options and balance to the built-in defaults?")){
+    config = defaultConfig(); saveConfig(); renderAdmin();
+  }
+});
+
+/* DoorDash wheel controls */
+$("ddSpinBtn").addEventListener("click", ()=>{
+  ac(); if(ddWheel.spinning) return;
+  stopFanfare();
+  $("ddSpinBtn").disabled=true;
+  startSpinSound();
+  ddWheel.spin(()=>{}, (winner)=>{
+    stopSpinSound();
+    $("ddSpinBtn").disabled=false;
+    shakeScreen(); playRandomYay();
+    fireworks({emoji:[winner.emoji,"🛵","🎉","🥡","✨","🎊"]});
+    showResult(winner,{lead:"DOORDASHING FROM"});
+  });
+});
+$("ddBackBtn").addEventListener("click", ()=>{
+  $("ddWheelModal").classList.remove("show");
+  rebuildMain();
+});
+
+/* =========================================================================
+   GRAB & FLICK — pull the wheel from the top, wind one way then whip it back.
+   The bigger the pull and the faster the whip-back, the faster it spins.
+   ========================================================================= */
+(function setupFlick(){
+  const grab = $("stage").querySelector(".wheel-wrap");
+  const DEG_PER_PX = 0.35;          // how much the wheel follows your pull
+  const MIN_FLICK_SPINS = 3;        // floor: even a gentle pull spins this many full turns
+                                    //        (so you can't nudge it onto the slice you want)
+  let drag = null;
+  grab.style.touchAction = "none";
+  grab.style.cursor = "grab";
+
+  grab.addEventListener("pointerdown", e=>{
+    if(mainWheel.spinning) return;
+    if(e.target.closest("#spinBtn")) return;              // let the center button click through
+    if($("resultOverlay").classList.contains("show")) return;
+    drag = { startX:e.clientX, startRot:mainWheel.rotation, maxPull:0, samples:[{x:e.clientX,t:performance.now()}] };
+    try{ grab.setPointerCapture(e.pointerId); }catch(_){}
+    grab.style.cursor = "grabbing";
+    mainWheel.setFlap(0);
+  });
+  grab.addEventListener("pointermove", e=>{
+    if(!drag) return;
+    const dx = e.clientX - drag.startX;
+    drag.maxPull = Math.max(drag.maxPull, Math.abs(dx));
+    mainWheel.rotation = drag.startRot + dx*DEG_PER_PX;   // wheel follows the pull
+    mainWheel.canvas.style.transform = `rotate(${mainWheel.rotation}deg)`;
+    drag.samples.push({x:e.clientX, t:performance.now()});
+    if(drag.samples.length>14) drag.samples.shift();
+  });
+  const release = e=>{
+    if(!drag) return;
+    grab.style.cursor = "grab";
+    try{ grab.releasePointerCapture(e.pointerId); }catch(_){}
+    const s = drag.samples, pull = drag.maxPull, now = performance.now();
+    drag = null;
+    // velocity of the final whip (last ~120ms) — this is the "quick reverse"
+    let ref = s[0];
+    for(let i=s.length-1;i>=0;i--){ if(now - s[i].t >= 110){ ref = s[i]; break; } }
+    const dt = Math.max(0.016, (s[s.length-1].t - ref.t)/1000);
+    const vx = (s[s.length-1].x - ref.x)/dt;              // px/s (recoil speed)
+    if(pull < 12){ mainWheel.setFlap(0); return; }         // basically no pull — ignore
+    // How far you pulled GATES the power; how hard you whip back BOOSTS it.
+    const pullFactor   = Math.min(1, pull / 260);          // 260px pull ≈ full wind-up
+    const recoilFactor = Math.min(1, Math.abs(vx) / 2800); // 2800px/s recoil ≈ full whip
+    const power = pullFactor * (0.35 + 0.65*recoilFactor); // 0..1
+    launchSpin({ turns: MIN_FLICK_SPINS + power*40, direction: vx>=0?1:-1, duration: 7000 + power*5500 });
+  };
+  grab.addEventListener("pointerup", release);
+  grab.addEventListener("pointercancel", release);
+})();
+
+/* =========================================================================
+   11. INIT
+   ========================================================================= */
+rebuildMain();
+updateChaosBtn();
+initSpinTrack();  // preload SPIN.mp3 so we can seek into it instantly
+
+// Launch fanfare: try immediately; browsers usually block autoplay, so also
+// fire on the first user interaction (whichever happens first).
+playLaunchFanfare();
+["pointerdown","keydown","click"].forEach(ev=> window.addEventListener(ev, ()=>playLaunchFanfare(), {once:true}));
+
+// Redraw wheels on font load so labels use Fredoka (canvas text needs the font ready)
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(()=>{ mainWheel.draw(); });
+}
+</script>
+</body>
+</html>
