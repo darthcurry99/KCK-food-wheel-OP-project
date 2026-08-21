@@ -453,7 +453,7 @@ const DEFAULT_DOORDASH = [
 ];
 
 // --- Wheel balance (defaults; editable in Admin) ---------------------------
-const DEFAULT_AQUI_PERCENT = 50;   // Aqui's default % of the wheel
+const DEFAULT_AQUI_PERCENT = 80;   // Aqui's default % of the wheel
 const MAX_WEDGES           = 48;   // safety cap on total main-wheel wedges
 const DD_COPIES            = 3;    // wedges per option on the DoorDash wheel
 const BOBA_SHARE           = 0.008;// ~0.8%  (the elusive <1% boba jackpot)
@@ -500,7 +500,7 @@ const DOORDASH_COLOR = "#eb1700";
 /* =========================================================================
    1b. EDITABLE CONFIG (persisted) — managed via the Admin panel
    ========================================================================= */
-const CONFIG_KEY = "kck-lunch-config-v2";
+const CONFIG_KEY = "kck-lunch-config-v3";
 const _norm = s => (s||"").trim().toLowerCase();
 // each main-wheel spot is { name, emoji, percent }. Aqui & DoorDash are just
 // rows too — their behaviour/colour is inferred from their name (see spotType).
