@@ -821,6 +821,7 @@ function tone(freq,dur,type="square",vol=0.15,when=0){
   o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.02);
 }
 const sTick   = ()=>tone(1200,0.03,"square",0.05);
+const sPeg    = ()=>tone(1400,0.02,"square",0.016); // faint peg click, sits UNDER the spin music
 function sFanfare(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.32,"triangle",0.18,i*0.1)); }
 function sJackpot(){ const n=[523,659,784,1047,1319,1568]; n.forEach((f,i)=>tone(f,0.25,"square",0.16,i*0.07)); n.reverse().forEach((f,i)=>tone(f,0.2,"triangle",0.12,0.5+i*0.06)); }
 function sAirhorn(){
@@ -1037,7 +1038,7 @@ const mainWheel = new Wheel($("wheel"), $("pointer"));
 function rebuildMain(){ mainWheel.setSlices(buildMainSlices()); updateHud(); }
 function updateHud(){ $("aquiCount").textContent = state.aquiRemaining; }
 
-function tickMain(){} // no click sound — only SPIN.mp3 plays during a spin (flapper motion is driven in Wheel.spin)
+function tickMain(){ sPeg(); } // faint peg click under SPIN.mp3 (flapper motion is driven in Wheel.spin)
 
 /* ---- CHAOS MODE ---- */
 const mainHub = ()=> $("stage").querySelector(".wheel-hub");
@@ -1308,7 +1309,7 @@ $("ddSpinBtn").addEventListener("click", ()=>{
   stopFanfare();
   $("ddSpinBtn").disabled=true;
   startSpinSound();
-  ddWheel.spin(()=>{}, (winner)=>{
+  ddWheel.spin(()=>{ sPeg(); }, (winner)=>{
     stopSpinSound();
     $("ddSpinBtn").disabled=false;
     shakeScreen(); playRandomYay();
